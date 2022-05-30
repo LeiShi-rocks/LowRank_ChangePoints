@@ -16,7 +16,7 @@ design = struct(...
     'para', 0);
 
 
-num_iter = 1;
+num_iter = 100;
 
 record    = cell(5, num_iter); % post_Theta_hat, post_tau_hat, post_rank, MCP_outInfo, Theta_star
 save_flag = 0;
@@ -24,6 +24,9 @@ save_flag = 0;
 
 
 for iter = 1:num_iter
+
+    fprintf('\n');
+    fprintf('Running iter %d \n\n', iter);
     
     [y, X, outInfo] = DataGenMCP(nr, nc, N, r, noise, problem, design, cp_opts);
     Theta_star = outInfo.Theta_star;
@@ -98,6 +101,6 @@ for iter = 1:num_iter
 end
 
 if save_flag
-    save('MR_MCP_large_signal.mat', record);
+    save('C:\Users\leish\Documents\Github\LowRank_ChangePoints\MatLassoMCP_main\Simulations\MR_MCP_large_signal\MR_MCP_large_signal.mat', 'record');
 end
 

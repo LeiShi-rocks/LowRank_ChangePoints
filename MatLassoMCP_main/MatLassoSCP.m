@@ -61,7 +61,7 @@ obj_path   =  zeros(1, resolution);
 Delta_path =  zeros(1, resolution);
 
 
-verbose    =  1;
+verbose    =  0;
 
 if verbose
     fprintf(' ');

@@ -69,7 +69,8 @@ for N_ind = 1:length(N_Cand)
         
         % solve LASSO
         if running_flag(2)
-            
+            Clambda = 0.15;
+            [Theta_Delta_hat, tau_hat, obj_path, Delta_path] = LassoSCP(y, X, threshold_var, 0.2, [0,1], 100, Clambda);
         end
         fprintf('\n');
         

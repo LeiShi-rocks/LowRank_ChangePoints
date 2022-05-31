@@ -1,5 +1,5 @@
 function [Theta_Delta_hat, tau_hat, obj_path, Delta_path, SCP_outInfo] = ...
-    LassoSCP(y, X, threshold_var, kappa, running_window, resolution_In, Clambda)
+    LassoSCP(y, X, threshold_var, kappa, running_window, resolution_In, APG_opts)
 %MATLASSOSCP Matrix lasso for a single change point
 %   APG_opts: the arguments for APG
 
@@ -39,30 +39,20 @@ switch design_type
     case "V"
         y_running = y(:, running_ind);
         X_running = X(:, running_ind);
-        y_running_vec = reshape(y_running, [N_running*nr, 1]);
-        X_running_vec = zeros(nr*nc, N_running*nr);
-        threshold_var_vec = repelem(threshold_var_running, nr);
-        fill_ind = 0;
-        e_ind = zeros(nr, 1);
-        for N_iter = 1:N_running
-            for row_iter = 1:nr
-                fill_ind = fill_ind + 1;
-                e_ind(row_iter) = 1;
-                X_running_vec(:, fill_ind) = reshape(e_ind * (X_running(:,N_iter)'), [nr*nc,1]);
-            end
-        end
-        N_running = N_running * nr;
     case "M"
         y_running = y(running_ind);
         X_running = X(:,:,running_ind);
-        y_running_vec = reshape(y_running, [N_running, 1]);
-        X_running_vec = reshape(X_running, [nr*nc, N_running]);
-        threshold_var_vec = threshold_var_running;
 end
 
 
 test_pos = linspace(left_end + kappa * window_length,...
     right_end - kappa * window_length, resolution);
+
+
+type       =  setOpts(APG_opts, "type", "L2");
+Clambda    =  setOpts(APG_opts, "Clambda", 1.0);
+tol        =  setOpts(APG_opts, "tol", 1e-4);
+maxiter    =  setOpts(APG_opts, "maxiter", 2e2);
 
 
 % disp([Clambda, tol, maxiter]);
@@ -72,51 +62,76 @@ obj_path   =  zeros(1, resolution);
 Delta_path =  zeros(1, resolution);
 
 
-verbose    =  1;
+verbose    =  0;
 
 if verbose
     fprintf(' ');
-    fprintf('Running MatLassoSCP... \n');
+    fprintf('Running LassoSCP... \n');
     fprintf(' ');
 end
 
-
-X_new_vec = zeros(2*nr*nc, N_running);
-best_obj = Inf;
-
-for ind = 1:resolution
-    tau = test_pos(ind);
-    for i = 1:(N_running)
-        X_new_vec(:,i) = [X_running_vec(:,i); X_running_vec(:,i) .* (threshold_var_vec(i) > tau)];
-    end
-    fit = glmnet(X_new_vec', y_running_vec, 'gaussian');
-    Theta_Delta = glmnetCoef(fit, Clambda*sqrt(log(nr*nc)/N_running));
-    Delta_path(ind) = sum(sum(Theta_Delta((nr*nc+1):(2*nr*nc)).^2));
-    pred = glmnetPredict(fit, X_new_vec', Clambda*sqrt(log(nr*nc)/N_running), 'link');
-    obj_path(ind) = sum(sum((y_running_vec - pred).^2))/(2*N_running)...
-        + Clambda*sqrt(log(nr*nc)/N_running) * sum(abs(Theta_Delta));
-    if obj_path(ind) < best_obj
-        Theta_Delta_hat = Theta_Delta;
-        tau_hat = tau;
-        best_obj = obj_path(ind);
-        best_Delta_Fnormsq = sum(sum((Theta_Delta(:,(nc+1):(2*nc))).^2));
-    end
-    if verbose
-        fprintf(' ');
-        fprintf('ind: %d |', ind);
-        fprintf('tau: %d |', tau);
-        fprintf('obj: %d |', obj_path(ind));
-        fprintf('best_obj: %d |\n', best_obj);
-        fprintf(' ');
-    end
+switch design_type
+    case "V"
+        X_new = zeros(2*nc, N_running);
+        best_obj = Inf;
+        Theta_init =  setOpts(APG_opts, "Theta_init", zeros(nr, 2*nc));
+        for ind = 1:resolution
+            tau = test_pos(ind);
+            for i = 1:N_running
+                X_new(:,i) = [X_running(:,i); X_running(:,i) .* (threshold_var_running(i) > tau)];
+            end
+            [Theta_Delta, ~, outInfo] = MVAPG_MCP(y_running, X_new, type, Clambda, tol, maxiter, Theta_init, 'l1');
+            Delta_path(ind) = sum(sum(Theta_Delta(:,(nc+1):(2*nc)).^2));
+            obj_path(ind) = outInfo.obj;
+            if outInfo.obj < best_obj
+                Theta_Delta_hat = Theta_Delta;
+                tau_hat = tau;
+                best_obj = outInfo.obj;
+                best_Delta_Fnormsq = sum(sum((Theta_Delta(:,(nc+1):(2*nc))).^2));
+            end
+            if verbose
+                fprintf(' ');
+                fprintf('ind: %d |', ind);
+                fprintf('tau: %d |', tau);
+                fprintf('obj: %d |', outInfo.obj);
+                fprintf('best_obj: %d |\n', best_obj);
+                fprintf(' ');
+            end
+        end
+        
+    case "M"
+        X_new = zeros(2*nr, nc, N_running);
+        best_obj = Inf;
+        Theta_init =  setOpts(APG_opts, "Theta_init", zeros(2*nr, nc));
+        for ind = 1:resolution
+            tau = test_pos(ind);
+            for i = 1:N_running
+                X_new(:,:,i) = [X_running(:,:,i); X_running(:,:,i) .* (threshold_var_running(i) > tau)];
+            end
+            [Theta_Delta, ~, outInfo] = MMAPG_MCP(y_running, X_new, type, Clambda, tol, maxiter, Theta_init, 'l1');
+            obj_path(ind) = outInfo.obj;
+            Delta_path(ind) = sum(sum(Theta_Delta((nr+1):(2*nr),:).^2));
+            if outInfo.obj < best_obj
+                Theta_Delta_hat = Theta_Delta;
+                tau_hat = tau;
+                best_obj = outInfo.obj;
+                best_Delta_Fnormsq = sum(sum((Theta_Delta((nr+1):(2*nr),:)).^2));
+            end
+            if verbose
+                fprintf('ind: %d \n', ind);
+                fprintf('tau: %d \n', tau);
+                fprintf('obj: %d \n', outInfo.obj);
+                fprintf('best_obj: %d \n', best_obj);
+            end
+        end
+            
+    otherwise
+        error("No such design_type defined!");
 end
-
 
 SCP_outInfo.best_obj = best_obj;
 SCP_outInfo.best_Delta_Fnormsq = best_Delta_Fnormsq;
 
-
-
-
+end
 
 

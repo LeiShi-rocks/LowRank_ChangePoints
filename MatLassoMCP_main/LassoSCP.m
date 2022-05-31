@@ -76,7 +76,7 @@ verbose    =  1;
 
 if verbose
     fprintf(' ');
-    fprintf('Running MatLassoSCP... \n');
+    fprintf('Running LassoSCP... \n');
     fprintf(' ');
 end
 

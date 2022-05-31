@@ -23,6 +23,7 @@ end
 pos_seg = [pos_seg, 1];
 
 signal  = setOpts(cp_opts, 'signal', 'large');
+sv      = setOpts(cp_opts, 'sv', ones(5,1));
 
 
 switch problem
@@ -37,7 +38,7 @@ switch problem
             for k = 1:num_seg
                 [U,~,~]   =  svd(normrnd(0,1,[nr, 100]), 'econ');
                 [V,~,~]   =  svd(normrnd(0,1,[nc, 100]), 'econ');
-                Theta_star(:,:,k)  =  U(:, 1:r) * V(:, 1:r)' / sqrt(r);
+                Theta_star(:,:,k)  =  U(:, 1:r) * diag(sv) * V(:, 1:r)' / sqrt(r);
             end
         elseif strcmp(signal, 'small')
             Theta_star = zeros(nr, nc, num_seg);
@@ -46,7 +47,7 @@ switch problem
             non_vary  =  1:(r-1);
             for k = 1:num_seg
                 indices = [non_vary, r-1+k];
-                Theta_star(:,:,k)  =  U(:, indices) * V(:, indices)' / sqrt(r);
+                Theta_star(:,:,k)  =  U(:, indices) * diag(sv) * V(:, indices)' / sqrt(r);
             end
         end
         
@@ -110,7 +111,7 @@ switch problem
             for k = 1:num_seg
                 [U,~,~]   =  svd(normrnd(0,1,[nr, 100]), 'econ');
                 [V,~,~]   =  svd(normrnd(0,1,[nc, 100]), 'econ');
-                Theta_star(:,:,k)  =  U(:, 1:r) * V(:, 1:r)' / sqrt(r);
+                Theta_star(:,:,k)  =  U(:, 1:r) * diag(sv) * V(:, 1:r)' / sqrt(r);
             end
         elseif strcmp(signal, 'small')
             Theta_star = zeros(nr, nc, num_seg);
@@ -119,7 +120,7 @@ switch problem
             non_vary  =  1:(r-1);
             for k = 1:num_seg
                 indices = [non_vary, r-1+k];
-                Theta_star(:,:,k)  =  U(:, indices) * V(:, indices)' / sqrt(r);
+                Theta_star(:,:,k)  =  U(:, indices) * diag(sv) * V(:, indices)' / sqrt(r);
             end
         end
         

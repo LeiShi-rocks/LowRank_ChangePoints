@@ -16,7 +16,7 @@
 % Output:
 % Theta.hat
 
-function [Theta_hat, rank, outInfo] = MVAPG_MCP(y, X, type, Clambda, tol, maxiter, Theta_init)
+function [Theta_hat, rank, outInfo] = MVAPG_MCP(y, X, type, Clambda, tol, maxiter, Theta_init, penalty_In)
 
 % Y = A0*X: Y: nr x N, X: nc x N, A0: nr x nc
 
@@ -70,7 +70,7 @@ end
 dimX = size(X);
 dimY = size(y);
 moreInfo = 0;
-if isfield(type, 'moreInfo') && type.moreInfo 
+if isfield(type, 'moreInfo') && type.moreInfo
     moreInfo = 1;
 end
 
@@ -87,23 +87,34 @@ N = dimX(2);
 
 eta = type.eta;
 Lf = type.Lf;
-continuation_scaling = 1e-3;
+%continuation_scaling = 1e-3;
+continuation_scaling = 1.0;
 
 Theta_old = Theta_init;
 Theta_new = Theta_init;
 
 tk_old = 1; tk_new = 1;
 
-lambda = Clambda * sqrt((nr + nc)*N)/nr;
+if nargin == 7
+    penalty = 'nuclear';
+    lambda = Clambda * sqrt((nr + nc)*N) / nr;
+elseif nargin == 8
+    penalty = penalty_In;
+    lambda = Clambda * sqrt(log(nr * nc)*N) / nr;
+end
+
+
+%fprintf('\n %s \n', penalty);
+
 lambda_run = lambda / continuation_scaling;
 %lambda_run = lambda;
-taumax          = Lf; 
-tau  =  taumax;
-taumin          = 1e-3 * taumax;
+taumax     = Lf;
+tau        =  taumax;
+taumin     = 1e-4 * taumax;
 
 for iter = 1 : maxiter
     % calculate required ingradients at Theta_k
-    Theta_nnew = Theta_new + (tk_old - 1)/tk_new .* (Theta_new - Theta_old); 
+    Theta_nnew = Theta_new + (tk_old - 1)/tk_new .* (Theta_new - Theta_old);
     
     % finding the gradient
     Sampling = Theta_nnew * X;
@@ -130,9 +141,14 @@ for iter = 1 : maxiter
     Theta_nold = Theta_nnew;
     G         = Theta_nnew - Grad/tau;
     
-    [U, S, V, rank] = proxsolver(G, 5, lambda_run/tau);
-
-    Theta_new = U*S*V';
+    if strcmp(penalty, 'nuclear')
+        [U, S, V, rank] = proxsolver(G, 7, lambda_run/tau);
+        Theta_new = U*S*V';
+    elseif strcmp(penalty, 'l1')
+        Theta_new = max(abs(G) - lambda_run/tau, 0) .* sign(G);
+        rank = sum(svd(Theta_new) > 1e-7);
+    end
+    
     
     %% check stop
     diff_norm = norm(Theta_new-Theta_old, 'fro')/norm(Theta_old, 'fro');
@@ -143,22 +159,43 @@ for iter = 1 : maxiter
     Sampling_new = Theta_new * X;
     ResMat_new = y - Sampling_new;
     
-    if strcmp(type.name, 'Wilcoxon')
-        [~, weight_new] = sort(ResMat_new, 2);
-        [~, weight_new] = sort(weight_new, 2);
-        weight_new = (weight_new/(N+1) - 0.5)/nr;
-        obj = sum(sum(weight_new .* ResMat_new)) + lambda_run .* sum(diag(S));
-        obj_line = sum(sum(weight .* ResMat)) + sum(sum(Grad .* (Theta_new - Theta_nold))) + ...
-            tau/2 * sum(sum((Theta_new - Theta_nold).^2)) + lambda_run .* sum(diag(S));
-    else
-        obj = sum(sum(Loss(y - Sampling_new)))/nr + lambda_run .* sum(diag(S));
-        obj_line = sum(sum(Loss(y - Sampling)))/nr + sum(sum(Grad .* (Theta_new - Theta_nold))) + ...
-            tau/2 * sum(sum((Theta_new - Theta_nold).^2)) + lambda_run .* sum(diag(S));
+    
+    switch penalty
+        case 'nuclear'
+            if strcmp(type.name, 'Wilcoxon')
+                [~, weight_new] = sort(ResMat_new, 2);
+                [~, weight_new] = sort(weight_new, 2);
+                weight_new = (weight_new/(N+1) - 0.5)/nr;
+                obj = sum(sum(weight_new .* ResMat_new)) + lambda_run .* sum(diag(S));
+                obj_line = sum(sum(weight .* ResMat)) + sum(sum(Grad .* (Theta_new - Theta_nold))) + ...
+                    tau/2 * sum(sum((Theta_new - Theta_nold).^2)) + lambda_run .* sum(diag(S));
+            else
+                obj = sum(sum(Loss(y - Sampling_new)))/nr + lambda_run .* sum(diag(S));
+                obj_line = sum(sum(Loss(y - Sampling)))/nr + sum(sum(Grad .* (Theta_new - Theta_nold))) + ...
+                    tau/2 * sum(sum((Theta_new - Theta_nold).^2)) + lambda_run .* sum(diag(S));
+            end
+        case 'l1'
+            if strcmp(type.name, 'Wilcoxon')
+                [~, weight_new] = sort(ResMat_new, 2);
+                [~, weight_new] = sort(weight_new, 2);
+                weight_new = (weight_new/(N+1) - 0.5)/nr;
+                obj = sum(sum(weight_new .* ResMat_new)) + lambda_run .* sum(sum(abs(Theta_new)));
+                obj_line = sum(sum(weight .* ResMat)) + sum(sum(Grad .* (Theta_new - Theta_nold))) + ...
+                    tau/2 * sum(sum((Theta_new - Theta_nold).^2)) + lambda_run .* sum(sum(abs(Theta_new)));
+            else
+                obj = sum(sum(Loss(y - Sampling_new)))/nr + lambda_run .* sum(sum(abs(Theta_new)));
+                obj_line = sum(sum(Loss(y - Sampling)))/nr + sum(sum(Grad .* (Theta_new - Theta_nold))) + ...
+                    tau/2 * sum(sum((Theta_new - Theta_nold).^2)) + lambda_run .* sum(sum(abs(Theta_new)));
+            end
+        otherwise
+            error('Non-defined penalty!');
     end
+    
+    
     
     %% update curvature using line search
     if obj < 0.9999 * obj_line
-        tau = min(taumax, max(eta*tau, taumin)); 
+        tau = min(taumax, max(eta*tau, taumin));
     elseif obj > obj_line
         % restart using Theta_old
         Theta_new  =  Theta_old;
@@ -179,14 +216,14 @@ for iter = 1 : maxiter
     % display progress if verbose == 1
     if verbose
         disp(['| Iter: ', num2str(iter), ...
-              '| obj: ', num2str(obj), ...
-              '| obj_line: ', num2str(obj_line), ...
-              '| diff_norm: ', num2str(diff_norm), ...
-              '| lambda_run: ', num2str(lambda_run), ...
-              ]);
+            '| obj: ', num2str(obj), ...
+            '| obj_line: ', num2str(obj_line), ...
+            '| diff_norm: ', num2str(diff_norm), ...
+            '| lambda_run: ', num2str(lambda_run), ...
+            ]);
     end
     
-
+    
     
 end
 Theta_hat = Theta_new;

@@ -1,4 +1,5 @@
-function [Theta_Delta_hat, tau_hat, obj_path, Delta_path, SCP_outInfo] = MatLassoSCP(y, X, threshold_var, kappa, running_window, resolution_In, APG_opts)
+function [Theta_Delta_hat, tau_hat, obj_path, Delta_path, SCP_outInfo]...
+    = MatLassoSCP(y, X, threshold_var, kappa, running_window, resolution_In, APG_opts)
 %MATLASSOSCP Matrix lasso for a single change point
 %   APG_opts: the arguments for APG
 

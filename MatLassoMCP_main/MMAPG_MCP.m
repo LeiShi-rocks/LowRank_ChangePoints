@@ -41,7 +41,7 @@ function [Theta_hat, rank, outInfo] = MMAPG_MCP(y, X, type, Clambda, tol, maxite
 %Loss = @(epsilon) epsilon.^2;
 %Loss = @(epsilon) abs(epsilon);
 
-verbose = 1;
+verbose = 0;
 
 mildverbose = 0;
 moreInfo = 0;

@@ -176,7 +176,7 @@ disp([sum(sum((Theta_hat - mean(Theta_star, 3)).^2)), rank]);
 clear;clc;
 nr = 40; 
 nc = 40;
-N = 2.5e3;
+N = 1e3;
 r = 5;
 noise = struct(...
     'type', 'Gaussian', ...

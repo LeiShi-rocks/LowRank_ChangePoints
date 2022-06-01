@@ -21,7 +21,7 @@ design = struct(...
 
 running_flag = [1,1,1,1];
 
-num_iter = 1;
+num_iter = 100;
 record_N = cell(4, 7, 3, num_iter);
 % 4 methods: ours, LASSO, Oracle, NC
 % Fnormsq_1, Fnormsq_2, tau_hat, obj_path, Delta_path, Theta_hat,
@@ -202,7 +202,7 @@ design = struct(...
 
 running_flag = [1,1,1,1];
 
-num_iter = 1;
+num_iter = 100;
 record_dim = cell(4, 7, 3, num_iter);
 % 4 methods: ours, LASSO, Oracle, NC
 % Fnormsq_1, Fnormsq_2, tau_hat, obj_path, Delta_path

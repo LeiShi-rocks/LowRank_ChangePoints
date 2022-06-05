@@ -178,5 +178,6 @@ end
 MCP_outInfo.tau_hat_path  = tau_hat_path;
 MCP_outInfo.best_obj_path = best_obj_path;
 MCP_outInfo.best_Delta_Fnormsq_path = best_Delta_Fnormsq_path;
+MCP_outInfo.Theta_Delta_hat = Theta_Delta_hat;
 MCP_outInfo.pre_tau_hat   = pre_tau_hat;
 

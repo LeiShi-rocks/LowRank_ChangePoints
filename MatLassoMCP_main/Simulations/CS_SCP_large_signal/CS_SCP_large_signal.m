@@ -189,7 +189,6 @@ fprintf('Running: CS_SCP_LARGE_SIGNAL, varying dimension... \n\n')
 
 dim_Cand = [20, 35, 50];
 
-
 N_Cand = 10*5*dim_Cand;
 r = 5;
 noise = struct(...

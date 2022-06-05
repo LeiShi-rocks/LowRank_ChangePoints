@@ -1,6 +1,6 @@
 %% varying N
 clear;clc;
-fprintf('Running: MR_SCP_LARGE_SIGNAL, varying N... \n\n')
+fprintf('Running: CS_SCP_LARGE_SIGNAL, varying N... \n\n')
 
 nr = 40;
 nc = 40;
@@ -19,7 +19,7 @@ design = [];
 
 running_flag = [1,1,1,1];
 
-num_iter = 1;
+num_iter = 100;
 record_N = cell(4, 7, 3, num_iter);
 % 4 methods: ours, LASSO, Oracle, NC
 % Fnormsq_1, Fnormsq_2, tau_hat, obj_path, Delta_path, Theta_hat,
@@ -47,7 +47,7 @@ for N_ind = 1:length(N_Cand)
             
             APG_opts = struct(...
                 'type', type,...
-                'Clambda', 0.3,...
+                'Clambda', 0.30,...
                 'tol', 1e-4,...
                 'maxiter', 2e2,...
                 'Theta_init', zeros(2*nr, nc));
@@ -82,7 +82,7 @@ for N_ind = 1:length(N_Cand)
             
             APG_opts = struct(...
                 'type', type,...
-                'Clambda', 0.40,...
+                'Clambda', 0.30,...
                 'tol', 1e-4,...
                 'maxiter', 2e2,...
                 'Theta_init', zeros(2*nr, nc));
@@ -185,7 +185,7 @@ end
 %% varying dimension
 clear;clc;
 
-fprintf('Running: MR_SCP_LARGE_SIGNAL, varying dimension... \n\n')
+fprintf('Running: CS_SCP_LARGE_SIGNAL, varying dimension... \n\n')
 
 dim_Cand = [20, 35, 50];
 
@@ -204,16 +204,16 @@ design = [];
 
 running_flag = [1,1,1,1];
 
-num_iter = 2;
+num_iter = 100;
 record_dim = cell(4, 7, 3, num_iter);
 % 4 methods: ours, LASSO, Oracle, NC
 % Fnormsq_1, Fnormsq_2, tau_hat, obj_path, Delta_path
 
-save_flag = 0;
+save_flag = 1;
 
 rng(2022);
 
-for dim_ind = 3:3
+for dim_ind = 1:length(dim_Cand)
     nr = dim_Cand(dim_ind);
     nc = nr;
     N = N_Cand(dim_ind);
@@ -267,7 +267,7 @@ for dim_ind = 3:3
             
             APG_opts = struct(...
                 'type', type,...
-                'Clambda', 0.40,...
+                'Clambda', 0.30,...
                 'tol', 1e-4,...
                 'maxiter', 2e2,...
                 'Theta_init', zeros(2*nr, nc));

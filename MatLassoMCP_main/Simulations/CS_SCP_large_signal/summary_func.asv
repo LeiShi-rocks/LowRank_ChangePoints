@@ -113,7 +113,7 @@ reports_vec  =  zeros(100, 1);
 reports_avg  =  zeros(4, 7, 3); % 4 methods, 7 criteria, 3 dim
 reports_std  =  zeros(4, 7, 3);
 
-dim_Cand = [20, 35, 50];
+dim_Cand = [25, 50, 75];
 
 for dim_ind = 1:3
     for method_ind = 1:4

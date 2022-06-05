@@ -87,8 +87,8 @@ N = dimX(2);
 
 eta = type.eta;
 Lf = type.Lf;
-%continuation_scaling = 1e-3;
-continuation_scaling = 1.0;
+continuation_scaling = 1e-3;
+%continuation_scaling = 1.0;
 
 Theta_old = Theta_init;
 Theta_new = Theta_init;
@@ -142,7 +142,7 @@ for iter = 1 : maxiter
     G         = Theta_nnew - Grad/tau;
     
     if strcmp(penalty, 'nuclear')
-        [U, S, V, rank] = proxsolver(G, 7, lambda_run/tau);
+        [U, S, V, rank] = proxsolver(G, 10, lambda_run/tau);
         Theta_new = U*S*V';
     elseif strcmp(penalty, 'l1')
         Theta_new = max(abs(G) - lambda_run/tau, 0) .* sign(G);

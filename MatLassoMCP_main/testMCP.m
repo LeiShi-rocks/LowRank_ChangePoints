@@ -243,7 +243,8 @@ APG_opts = struct(...
     'maxiter', 2e2,...
     'Theta_init', zeros(2*nr, nc));
 
-[Theta_Delta_hat, tau_hat, obj_path, Delta_path] = LassoSCP(y, X, outInfo.threshold_var, 0.2, [0,1], 50, APG_opts);
+[Theta_Delta_hat, tau_hat, obj_path, Delta_path] =...
+    LassoSCP(y, X, outInfo.threshold_var, 0.2, [0,1], 50, APG_opts);
 figure;
 plot(obj_path);
 figure;

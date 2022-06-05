@@ -21,7 +21,7 @@ num_iter = 100;
 record    = cell(5, num_iter); % post_Theta_hat, post_tau_hat, post_rank, MCP_outInfo, Theta_star
 save_flag = 0;
 
-
+rng(2022);
 
 for iter = 1:num_iter
 

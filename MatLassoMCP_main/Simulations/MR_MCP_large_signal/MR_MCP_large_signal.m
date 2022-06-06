@@ -57,7 +57,7 @@ for iter = 1:num_iter
         'name', 'L2',...
         'eta', 0.8,...
         'Lf', 1e4);
-    Clambda_base  = 0.15;
+    Clambda_base  = [0.15, 0.15];
     window_length = 0.10;
     num_windows   = 50;
     cutoff        = 0.6;

@@ -15,7 +15,7 @@
 % MCP_outInfo.best_Delta_Fnormsq_path = best_Delta_Fnormsq_path;
 % MCP_outInfo.pre_tau_hat   = pre_tau_hat;
 
-num_iter = 30;
+num_iter = 50;
 
 tau_star     = [0.25, 0.50, 0.75];
 reports_vec  = zeros(num_iter, 1);

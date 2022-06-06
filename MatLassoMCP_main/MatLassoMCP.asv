@@ -124,19 +124,17 @@ end
 
 num_cps = length(pre_tau_hat);
 
-left_ends  = [0, 0.25*pre_tau_hat(2:end) + 0.75*pre_tau_hat(1:(end-1))];
-right_ends = [0.75*pre_tau_hat(2:end) + 0.25*pre_tau_hat(1:(end-1)), 1]; 
+left_ends  = 0.25*pre_tau_hat(2:end) + 0.75*pre_tau_hat(1:(end-1));
+right_ends = 0.25*pre_tau_hat(2:end) + 0.75*pre_tau_hat(1:(end-1)); 
 
-%mid_points = 0.5*(pre_tau_hat(2:end) + pre_tau_hat(1:(end-1)));
-%mid_points = [0, mid_points, 1];
+mid_points = 0.5*(pre_tau_hat(2:end) + pre_tau_hat(1:(end-1)));
+mid_points = [0, mid_points, 1];
 post_tau_hat = zeros(1, num_cps);
 
 
 for ind = 1:num_cps
-    %left_end  = mid_points(ind);
-    %right_end = mid_points(ind+1);
-    left_end = left_ends(ind);
-    right_end = right_ends(ind);
+    left_end  = mid_points(ind);
+    right_end = mid_points(ind+1);
     running_window = [left_end, right_end];
     %APG_opts_2.Clambda = Clambda_base;
     APG_opts_2.Clambda = Clambda_base(2);

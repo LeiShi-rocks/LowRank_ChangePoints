@@ -1,7 +1,7 @@
 % summary of the results
 %% MR MCP large
-clear;clc;
-load('MR_MCP_large_signal.mat');
+%clear;clc;
+%load('MR_MCP_large_signal.mat');
 
 
 % record{1, iter} = post_Theta_hat;
@@ -15,14 +15,16 @@ load('MR_MCP_large_signal.mat');
 % MCP_outInfo.best_Delta_Fnormsq_path = best_Delta_Fnormsq_path;
 % MCP_outInfo.pre_tau_hat   = pre_tau_hat;
 
+num_iter = 30;
+
 tau_star     = [0.25, 0.50, 0.75];
-reports_vec  = zeros(100, 1);
+reports_vec  = zeros(num_iter, 1);
 reports_avg  = zeros(10,1); % 10 criteria, 2 settings (pre and post)
 reports_std  = zeros(10,1);
 
 
 % number of pre selected breaks
-for iter = 1:100
+for iter = 1:num_iter
     reports_vec(iter) = length(record{4, iter}.pre_tau_hat);
 end
 reports_avg(1, 1) = mean(reports_vec);
@@ -30,7 +32,7 @@ reports_std(1, 1) = std(reports_vec);
 
 
 % OE for pre selected
-for iter = 1:100
+for iter = 1:num_iter
     contrast_tab = abs(tau_star' - record{4, iter}.pre_tau_hat);
     reports_vec(iter) = max(min(contrast_tab, [], 2));
 end
@@ -39,7 +41,7 @@ reports_std(2, 1) = std(reports_vec);
 
 
 % UE for pre selected
-for iter = 1:100
+for iter = 1:num_iter
     contrast_tab = abs(tau_star' - record{4, iter}.pre_tau_hat);
     reports_vec(iter) = max(min(contrast_tab, [], 1));
 end
@@ -49,7 +51,7 @@ reports_std(3, 1) = std(reports_vec);
 
 
 % number of post selected breaks
-for iter = 1:100
+for iter = 1:num_iter
     reports_vec(iter) = length(record{2, iter});
 end
 reports_avg(4, 1) = mean(reports_vec);
@@ -58,7 +60,7 @@ reports_std(4, 1) = std(reports_vec);
 
 
 % OE for post selected
-for iter = 1:100
+for iter = 1:num_iter
     contrast_tab = abs(tau_star' - record{2, iter});
     reports_vec(iter) = max(min(contrast_tab, [], 2));
 end
@@ -68,7 +70,7 @@ reports_std(5, 1) = std(reports_vec);
 
 
 % UE for post selected
-for iter = 1:100
+for iter = 1:num_iter
     contrast_tab = abs(tau_star' - record{2, iter});
     reports_vec(iter) = max(min(contrast_tab, [], 1));
 end
@@ -78,7 +80,7 @@ reports_std(6, 1) = std(reports_vec);
 
 
 % OE for matrices in Fnorm squared
-for iter = 1:100
+for iter = 1:num_iter
     Theta_star = record{5, iter}; 
     num_star = size(Theta_star, 3);
     post_Theta_hat = record{1, iter};
@@ -96,7 +98,7 @@ reports_std(7, 1) = std(reports_vec);
 
 
 % UE for matrices in Fnorm squared
-for iter = 1:100
+for iter = 1:num_iter
     Theta_star = record{5, iter}; 
     num_star = size(Theta_star, 3);
     post_Theta_hat = record{1, iter};
@@ -114,7 +116,7 @@ reports_std(8, 1) = std(reports_vec);
 
 
 % max rank
-for iter = 1:100
+for iter = 1:num_iter
     reports_vec(iter) = max(record{3, iter});
 end
 reports_avg(9, 1) = mean(reports_vec);
@@ -122,7 +124,7 @@ reports_std(9, 1) = std(reports_vec);
 
 
 % min rank
-for iter = 1:100
+for iter = 1:num_iter
     reports_vec(iter) = min(record{3, iter});
 end
 reports_avg(10, 1) = mean(reports_vec);

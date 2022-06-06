@@ -7,7 +7,8 @@ load('record_N_refit_CS_SCP_large_signal.mat'); % nr = nc = 50;
 % 4 methods: ours, LASSO, Oracle, NC
 % Fnormsq_1, Fnormsq_2, tau_hat, obj_path, Delta_path, Theta_hat,
 % Theta_star(in first round of running)
-
+% 3 N_ind
+%
 reports_vec  = zeros(100, 1);
 reports_avg  = zeros(4, 7, 3); % 4 methods, 7 criteria, 3 N
 reports_std  = zeros(4, 7, 3);
@@ -125,9 +126,17 @@ ylabel('Estimated change point', 'FontWeight', 'bold', 'FontSize', 14);
 %% plot: obj trajectory
 %figure;
 
+figure;
+plot_vec_path = zeros(50,100);
+for iter = 1:100
+    plot_vec_path(:,iter) = record_N_refit{1, 4, 3, iter}';
+end
 
-
-
+plot(0.02*(1:50),plot_vec_path, 'Color', [0.6 0.6 0.6]);
+hold on;
+plot(0.02*(1:50), mean(plot_vec_path, 2), 'Color', 'red', 'LineWidth', 3);
+xlabel("Position \tau", 'FontWeight', 'bold', 'FontSize', 14);
+ylabel("Objective value", 'FontWeight', 'bold', 'FontSize', 14);
 
 %% MR SCP large
 clear;clc;
@@ -228,3 +237,41 @@ for dim_ind = 1:3
     ]);
 end
 
+%% plot: boxplot_dim
+
+plot_vec_ML = zeros(100,3);
+plot_vec_VL = zeros(100,3);
+% boxplot for change points
+figure;
+for dim_ind = 1:3
+    for iter = 1:100
+        plot_vec_ML(iter, dim_ind) = record_dim_refit{1, 3, dim_ind, iter};
+    end
+end
+
+for dim_ind = 1:3
+    for iter = 1:100
+        plot_vec_VL(iter, dim_ind) = record_dim_refit{2, 3, dim_ind, iter};
+    end
+end
+
+labels = {'ML, m=20', 'ML, m=35', 'ML, m=50', 'VL, m=20', 'VL, m=35', 'VL, m=50'};
+boxplot([plot_vec_ML, plot_vec_VL], 'Labels', labels);
+xlabel('Method and sample size', 'FontWeight', 'bold', 'FontSize', 14);
+ylabel('Estimated change point', 'FontWeight', 'bold', 'FontSize', 14);
+%boxplot(plot_vec_ML, 'Labels', labels(1:3));
+
+%% plot: obj trajectory
+%figure;
+
+figure;
+plot_vec_path = zeros(50,100);
+for iter = 1:100
+    plot_vec_path(:,iter) = record_dim_refit{1, 4, 3, iter}';
+end
+
+plot(0.02*(1:50), plot_vec_path, 'Color', [0.6 0.6 0.6]);
+hold on;
+plot(0.02*(1:50), mean(plot_vec_path, 2), 'Color', 'red', 'LineWidth', 3);
+xlabel("Position \tau", 'FontWeight', 'bold', 'FontSize', 14);
+ylabel("Objective value", 'FontWeight', 'bold', 'FontSize', 14);

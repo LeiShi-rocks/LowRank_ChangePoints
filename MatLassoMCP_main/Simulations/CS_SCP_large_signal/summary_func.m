@@ -117,7 +117,7 @@ for N_ind = 1:3
     end
 end
 
-labels = {'ML, N=1500', 'ML, N=2000', 'ML, N=2500', 'VL, N=1500', 'VL, N=2000', 'VL, N=2500'};
+labels = {'ML, 1500', 'ML, 2000', 'ML, 2500', 'VL, 1500', 'VL, 2000', 'VL, 2500'};
 boxplot([plot_vec_ML, plot_vec_VL], 'Labels', labels);
 xlabel('Method and sample size', 'FontWeight', 'bold', 'FontSize', 14);
 ylabel('Estimated change point', 'FontWeight', 'bold', 'FontSize', 14);
@@ -255,9 +255,9 @@ for dim_ind = 1:3
     end
 end
 
-labels = {'ML, m=20', 'ML, m=35', 'ML, m=50', 'VL, m=20', 'VL, m=35', 'VL, m=50'};
+labels = {'ML, 20', 'ML, 35', 'ML, 50', 'VL, 20', 'VL, 35', 'VL, 50'};
 boxplot([plot_vec_ML, plot_vec_VL], 'Labels', labels);
-xlabel('Method and sample size', 'FontWeight', 'bold', 'FontSize', 14);
+xlabel('Method and dimension', 'FontWeight', 'bold', 'FontSize', 14);
 ylabel('Estimated change point', 'FontWeight', 'bold', 'FontSize', 14);
 %boxplot(plot_vec_ML, 'Labels', labels(1:3));
 

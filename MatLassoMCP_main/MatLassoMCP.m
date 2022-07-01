@@ -6,11 +6,13 @@ function [post_Theta_hat, post_tau_hat, post_rank, MCP_outInfo] = MatLassoMCP(y,
 %        - resolution_In
 %        - APG_opts = type + tol + maxiter + Theta_init
 %   SCP_arg_2: for Step 2
-%   post_APG_args = 
+%   post_APG_args =
+
+runningFlag = [1,1,1,0];
 
 % Initialization
-post_Theta_hat = []; 
-post_tau_hat   = []; 
+post_Theta_hat = [];
+post_tau_hat   = [];
 post_rank      = [];
 MCP_outInfo    = [];
 pre_tau_hat    = [];
@@ -57,136 +59,147 @@ best_Delta_Fnormsq_path = zeros(1,num_windows);
 
 % Step 1: rolling windows for consistent number of change points
 
-if verbose
-    fprintf("\n Running Step 1... \n");
-end
-
-for current_window = 1:num_windows
-    % update interval endpoints
-    
-    left_end    =  (current_window - 1) * step_length;
-    right_end   =  left_end + window_length;
-    
-    APG_opts_1.Clambda = Clambda_base(1);
-    running_window = [left_end, right_end];
-    [~, tau_hat, ~, ~, SCP_outInfo] = MatLassoSCP(y, X, threshold_var, kappa_1, running_window, resolution_In_1, APG_opts_1);
-    
-    % record the best obj and best Delta Fnorm square
-    
-    tau_hat_path(current_window)  =  tau_hat;
-    best_obj_path(current_window) =  SCP_outInfo.best_obj;
-    best_Delta_Fnormsq_path(current_window) = SCP_outInfo.best_Delta_Fnormsq;
-    
-    % display
+if runningFlag(1)
     if verbose
-        fprintf(" ");
-        fprintf("Current: %d ; tau_hat: %d ; best_obj: %d ; best_Delta_Fnormsq: %d \n ", ...
-            current_window, tau_hat, SCP_outInfo.best_obj, SCP_outInfo.best_Delta_Fnormsq);
-        fprintf(" ");
+        fprintf("\n Running Step 1... \n");
+    end
+    
+    for current_window = 1:num_windows
+        % update interval endpoints
+        
+        left_end    =  (current_window - 1) * step_length;
+        right_end   =  left_end + window_length;
+        
+        APG_opts_1.Clambda = Clambda_base(1);
+        running_window = [left_end, right_end];
+        [~, tau_hat, ~, ~, SCP_outInfo] = MatLassoSCP(y, X, threshold_var, kappa_1, running_window, resolution_In_1, APG_opts_1);
+        
+        % record the best obj and best Delta Fnorm square
+        
+        tau_hat_path(current_window)  =  tau_hat;
+        best_obj_path(current_window) =  SCP_outInfo.best_obj;
+        best_Delta_Fnormsq_path(current_window) = SCP_outInfo.best_Delta_Fnormsq;
+        
+        % display
+        if verbose
+            fprintf(" ");
+            fprintf("Current: %d ; tau_hat: %d ; best_obj: %d ; best_Delta_Fnormsq: %d \n ", ...
+                current_window, tau_hat, SCP_outInfo.best_obj, SCP_outInfo.best_Delta_Fnormsq);
+            fprintf(" ");
+        end
     end
 end
+
+
 
 if ~only_plot_flag
-
-% Step 2: Selection by pruning
-
-if verbose
-    fprintf("\n Running Step 2... \n");
-end
-
-cutting_span = floor(window_length/step_length);
-running_Delta_path = best_Delta_Fnormsq_path;
-record_max_ind = [];
-record_max_Delta_Fnormsq = [];
-while any(running_Delta_path > cutoff)
-    [max_Delta_Fnormsq, max_ind] = max(running_Delta_path);
-    max_ind = max_ind(1);
-    record_max_ind = [record_max_ind, max_ind];
-    record_max_Delta_Fnormsq = [record_max_Delta_Fnormsq, max_Delta_Fnormsq];
-    prune_left  = max([1, max_ind - cutting_span]);
-    prune_right =  min([num_windows, max_ind + cutting_span]);
-    running_Delta_path(prune_left:prune_right) = -Inf;
-end
-
-pre_tau_hat = sort(tau_hat_path(record_max_ind));
-
-if verbose
-    fprintf("\n pre_tau_hat: %.4f \n", pre_tau_hat);
-end
-
-% Step 3: Selection using pre selected positions
-
-
-if verbose
-    fprintf("\n Running Step 3... \n");
-end
-
-
-num_cps = length(pre_tau_hat);
-
-left_ends  = [0, 0.25*pre_tau_hat(2:end) + 0.75*pre_tau_hat(1:(end-1))];
-right_ends = [0.75*pre_tau_hat(2:end) + 0.25*pre_tau_hat(1:(end-1)), 1]; 
-
-%mid_points = 0.5*(pre_tau_hat(2:end) + pre_tau_hat(1:(end-1)));
-%mid_points = [0, mid_points, 1];
-post_tau_hat = zeros(1, num_cps);
-
-
-for ind = 1:num_cps
-    %left_end  = mid_points(ind);
-    %right_end = mid_points(ind+1);
-    left_end = left_ends(ind);
-    right_end = right_ends(ind);
-    running_window = [left_end, right_end];
-    %APG_opts_2.Clambda = Clambda_base;
-    APG_opts_2.Clambda = Clambda_base(2);
-    [Theta_Delta_hat, tau_hat, ~, ~, ~] = MatLassoSCP(y, X, threshold_var, kappa_2, running_window, resolution_In_2, APG_opts_2);
-    post_tau_hat(ind) = tau_hat;
     
-    if verbose
-        fprintf("Detecting change point %d ... ; %d in total. \n", ind, num_cps);
+    % Step 2: Selection by pruning
+    if runningFlag(2)
+        if verbose
+            fprintf("\n Running Step 2... \n");
+        end
+        
+        cutting_span = floor(window_length/step_length);
+        running_Delta_path = best_Delta_Fnormsq_path;
+        record_max_ind = [];
+        record_max_Delta_Fnormsq = [];
+        while any(running_Delta_path > cutoff)
+            [max_Delta_Fnormsq, max_ind] = max(running_Delta_path);
+            max_ind = max_ind(1);
+            record_max_ind = [record_max_ind, max_ind];
+            record_max_Delta_Fnormsq = [record_max_Delta_Fnormsq, max_Delta_Fnormsq];
+            prune_left  = max([1, max_ind - cutting_span]);
+            prune_right =  min([num_windows, max_ind + cutting_span]);
+            running_Delta_path(prune_left:prune_right) = -Inf;
+        end
+        
+        pre_tau_hat = sort(tau_hat_path(record_max_ind));
+        
+        if verbose
+            fprintf("\n pre_tau_hat: %.4f \n", pre_tau_hat);
+        end
     end
-end
-
-if verbose
-    fprintf('\n post_tau_hat: %.4f\n', post_tau_hat);
-end
-
-
-% Step 4: matrix estimation using the selected change points
-end_points = [0, post_tau_hat, 1];
-num_seg    = num_cps + 1;
-post_Theta_hat  = zeros(nr, nc, num_seg); 
-post_rank  = zeros(1,num_seg);
-
-
-type         = setOpts(post_APG_args, "type", []);
-Clambda      = setOpts(post_APG_args, "Clambda", 1.0);
-tol          = setOpts(post_APG_args, "tol", 1e-4);
-maxiter      = setOpts(post_APG_args, "maxiter", 1e2);
-Theta_init   = setOpts(post_APG_args, "Theta_init", zeros(nr, nc));
-
-
-for ind = 1:num_seg
-    left_end    =  end_points(ind);
-    right_end   =  end_points(ind+1);
-    running_ind =  find(threshold_var > left_end & threshold_var <= right_end);
     
-    switch design_type
-        case "V"
-            y_running = y(:, running_ind);
-            X_running = X(:, running_ind);
-            [Theta_hat, rank, ~] = MVAPG_MCP(y_running, X_running, type, Clambda, tol, maxiter, Theta_init);
-            post_Theta_hat(:,:,ind) = Theta_hat;
-            post_rank(ind) = rank;
-        case "M"
-            y_running = y(running_ind);
-            X_running = X(:,:,running_ind);
-            [Theta_hat, rank, ~] = MMAPG_MCP(y_running, X_running, type, Clambda, tol, maxiter, Theta_init);
-            post_Theta_hat(:,:,ind) = Theta_hat;
-            post_rank(ind) = rank;
+    
+    
+    % Step 3: Selection using pre selected positions
+    
+    if runningFlag(3)
+        if verbose
+            fprintf("\n Running Step 3... \n");
+        end
+        
+        
+        num_cps = length(pre_tau_hat);
+        
+        left_ends  = [0, 0.25*pre_tau_hat(2:end) + 0.75*pre_tau_hat(1:(end-1))];
+        right_ends = [0.75*pre_tau_hat(2:end) + 0.25*pre_tau_hat(1:(end-1)), 1];
+        
+        %mid_points = 0.5*(pre_tau_hat(2:end) + pre_tau_hat(1:(end-1)));
+        %mid_points = [0, mid_points, 1];
+        post_tau_hat = zeros(1, num_cps);
+        
+        
+        for ind = 1:num_cps
+            %left_end  = mid_points(ind);
+            %right_end = mid_points(ind+1);
+            left_end = left_ends(ind);
+            right_end = right_ends(ind);
+            running_window = [left_end, right_end];
+            %APG_opts_2.Clambda = Clambda_base;
+            APG_opts_2.Clambda = Clambda_base(2);
+            [Theta_Delta_hat, tau_hat, ~, ~, ~] = MatLassoSCP(y, X, threshold_var, kappa_2, running_window, resolution_In_2, APG_opts_2);
+            post_tau_hat(ind) = tau_hat;
+            
+            if verbose
+                fprintf("Detecting change point %d ... ; %d in total. \n", ind, num_cps);
+            end
+        end
+        
+        if verbose
+            fprintf('\n post_tau_hat: %.4f\n', post_tau_hat);
+        end
+        
     end
-end
+    
+    if runningFlag(4)
+        % Step 4: matrix estimation using the selected change points
+        end_points = [0, post_tau_hat, 1];
+        num_seg    = num_cps + 1;
+        post_Theta_hat  = zeros(nr, nc, num_seg);
+        post_rank  = zeros(1,num_seg);
+        
+        
+        type         = setOpts(post_APG_args, "type", []);
+        Clambda      = setOpts(post_APG_args, "Clambda", 1.0);
+        tol          = setOpts(post_APG_args, "tol", 1e-4);
+        maxiter      = setOpts(post_APG_args, "maxiter", 1e2);
+        Theta_init   = setOpts(post_APG_args, "Theta_init", zeros(nr, nc));
+        
+        
+        for ind = 1:num_seg
+            left_end    =  end_points(ind);
+            right_end   =  end_points(ind+1);
+            running_ind =  find(threshold_var > left_end & threshold_var <= right_end);
+            
+            switch design_type
+                case "V"
+                    y_running = y(:, running_ind);
+                    X_running = X(:, running_ind);
+                    [Theta_hat, rank, ~] = MVAPG_MCP(y_running, X_running, type, Clambda, tol, maxiter, Theta_init);
+                    post_Theta_hat(:,:,ind) = Theta_hat;
+                    post_rank(ind) = rank;
+                case "M"
+                    y_running = y(running_ind);
+                    X_running = X(:,:,running_ind);
+                    [Theta_hat, rank, ~] = MMAPG_MCP(y_running, X_running, type, Clambda, tol, maxiter, Theta_init);
+                    post_Theta_hat(:,:,ind) = Theta_hat;
+                    post_rank(ind) = rank;
+            end
+        end
+    end
+    
 end
 
 MCP_outInfo.tau_hat_path  = tau_hat_path;

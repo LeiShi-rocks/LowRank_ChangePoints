@@ -142,7 +142,7 @@ for iter = 1 : maxiter
     G         = Theta_nnew - Grad/tau;
     
     if strcmp(penalty, 'nuclear')
-        [U, S, V, rank] = proxsolver(G, 7, lambda_run/tau);
+        [U, S, V, rank] = proxsolver(G, 7, lambda_run/tau); % 7 for simulations;
         Theta_new = U*S*V';
     elseif strcmp(penalty, 'l1')
         Theta_new = max(abs(G) - lambda_run/tau, 0) .* sign(G);
@@ -220,6 +220,7 @@ for iter = 1 : maxiter
             '| obj_line: ', num2str(obj_line), ...
             '| diff_norm: ', num2str(diff_norm), ...
             '| lambda_run: ', num2str(lambda_run), ...
+            '| rank: ', num2str(rank), ...
             ]);
     end
     

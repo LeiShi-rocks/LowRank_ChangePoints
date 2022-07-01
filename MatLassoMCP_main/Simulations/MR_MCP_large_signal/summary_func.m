@@ -1,7 +1,7 @@
 % summary of the results
 %% MR MCP large
 %clear;clc;
-%load('MR_MCP_large_signal.mat');
+load('MR_MCP_large_signal.mat');
 
 
 % record{1, iter} = post_Theta_hat;
@@ -15,7 +15,7 @@
 % MCP_outInfo.best_Delta_Fnormsq_path = best_Delta_Fnormsq_path;
 % MCP_outInfo.pre_tau_hat   = pre_tau_hat;
 
-num_iter = 50;
+num_iter = 100;
 
 tau_star     = [0.25, 0.50, 0.75];
 reports_vec  = zeros(num_iter, 1);
@@ -153,5 +153,21 @@ disp([fancy_num2str(reports_avg_tab(:,1), reports_std_tab(:,1), 2, 2, 1e-2), ...
     fancy_num2str(reports_avg_tab(:,7), reports_std_tab(:,7), 2, 2, 1e-3)...
     ]);
 
+%% plot
+trajectories = zeros(20, 100);
+for iter = 1:num_iter
+    trajectories(:, iter) = record{4, iter}.best_Delta_Fnormsq_path';
+end
+figure;
+plot((1:20), trajectories, 'Color', [0.6, 0.6, 0.6]);
+hold on;
+plot((1:20), mean(trajectories, 2), 'Color', 'red', 'LineWidth', 3);
 
+% cutoff
+% plot((1:20), 0.80*ones(20,1), 'Color', 'blue', 'LineStyle', ':', 'LineWidth', 3);
+% text(1.25, 1.5, 'cutoff: 0.80', 'Color', 'blue');
+
+xlim([1,20]);
+xlabel('Index of the current interval');
+ylabel('$\|\hat{\Delta}_i\|_F^2$', 'Interpreter','latex');
 

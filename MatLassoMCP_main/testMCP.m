@@ -85,12 +85,100 @@ plot(Delta_path);
 
 
 
+%% ============================================ 
+% No change point, deterministic thresholds, CS
+%  ============================================
+clear;clc;
+nr = 40; 
+nc = 40;
+N = 2e3;
+r = 5;
+noise = struct(...
+    'type', 'Gaussian', ...
+    'scale', 1.0, ...
+    'para', 0.1);
+problem = 'CS';
+cp_opts = struct(...
+    'num_seg', 1,...
+    'pos_seg', 0);
+design = [];
+
+[y, X, outInfo] = DataGenMCP(nr, nc, N, r, noise, problem, design, cp_opts);
+
+Theta_star = outInfo.Theta_star;
+threshold_var = outInfo.threshold_var;
+
+
+%% MMAPG pure
+type = struct(...
+    'name', 'L2',...
+    'eta', 0.8,...
+    'Lf', 1e5);
+Clambda = 0.5;
+tol = 1e-4;
+maxiter = 2e2;
+Theta_init = zeros(nr, nc);
+
+[Theta_hat, rank] = MMAPG_MCP(y, X, type, Clambda, tol, maxiter, Theta_init);
+
+disp([sum(sum((Theta_hat - Theta_star).^2)), rank]);
+
+%% Lasso
+type = struct(...
+    'name', 'L2',...
+    'eta', 0.8,...
+    'Lf', 1e5);
+Clambda = 0.2;
+tol = 1e-4;
+maxiter = 2e2;
+Theta_init = zeros(nr, nc);
+
+[Theta_hat, rank] = MMAPG_MCP(y, X, type, Clambda, tol, maxiter, Theta_init, 'l1');
+
+disp([sum(sum((Theta_hat - Theta_star).^2)), rank]);
+
+%% MMAPG Assume single change point
+X_new = zeros(2*nr, nc, N);
+for i = 1:N
+    X_new(:,:,i) = [X(:,:,i); X(:,:,i) .* (threshold_var(i) > 0.5)];
+end
+Clambda = 0.3;
+type = struct(...
+    'name', 'L2',...
+    'eta', 0.8,...
+    'Lf', 5e4);
+tol = 1e-4;
+maxiter = 2e2;
+Theta_init = zeros(2*nr, nc);
+
+[Theta_hat, ~] = MMAPG_MCP(y, X_new, type, Clambda, tol, maxiter, Theta_init);
+
+disp(sum(sum((Theta_hat(1:nr,:) - Theta_star(:,:)).^2)));
+disp(sum(sum((Theta_hat((nr + 1):(2*nr),:)).^2)));
+
+
+%% MatLassoSCP
+APG_opts = struct(...
+    'type', type,...
+    'Clambda', 0.3,...
+    'tol', 1e-4,...
+    'maxiter', 1.5e2,...
+    'Theta_init', zeros(2*nr, nc));
+[Theta_Delta_hat, tau_hat, obj_path, Delta_path] = MatLassoSCP(y, X, outInfo.threshold_var, 0.2, [0,1], 50, APG_opts);
+figure;
+plot(obj_path);
+figure;
+plot(Delta_path);
+
+
+
+
 %% ===============================================================
-% Date generation : No change point, deterministic thresholds, MR
+% Date generation : No change point, deterministic thresholds, MR 
 % ================================================================
 clear;clc;
-nr = 50; 
-nc = 50;
+nr = 40; 
+nc = 40;
 N = 2000;
 r = 5;
 noise = struct(...
@@ -124,8 +212,22 @@ Theta_init = zeros(nr, nc);
 
 disp([sum(sum((Theta_hat - Theta_star).^2)), rank]);
 
-% APGL
-
+%% MatLassoSCP
+type = struct(...
+    'name', 'L2',...
+    'eta', 0.8,...
+    'Lf', 1e4);
+APG_opts = struct(...
+    'type', type,...
+    'Clambda', 0.15,...
+    'tol', 1e-4,...
+    'maxiter', 1.5e2,...
+    'Theta_init', zeros(nr, 2*nc));
+[Theta_Delta_hat, tau_hat, obj_path, Delta_path] = MatLassoSCP(y, X, outInfo.threshold_var, 0.2, [0,1], 50, APG_opts);
+figure;
+plot(obj_path);
+figure;
+plot(Delta_path);
 
 %% ============================================
 % 3 change points, deterministic thresholds, CS

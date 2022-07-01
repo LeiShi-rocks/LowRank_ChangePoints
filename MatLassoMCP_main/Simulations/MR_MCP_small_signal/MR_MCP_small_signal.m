@@ -1,7 +1,7 @@
 clear;clc;
 nr = 40;
 nc = 40;
-N = 1000;
+N = 1300;
 r = 5;
 
 noise = struct(...
@@ -9,22 +9,33 @@ noise = struct(...
     'scale', 1.0, ...
     'para', 0.1);
 problem = 'MR';
-signal_size = 1;
+
+signal_size = 1.0;
+
 cp_opts = struct(...
     'num_seg', 4,...
     'pos_seg', [0, 0.25, 0.50, 0.75],...
     'signal', 'small',...
     'sv', [sqrt((5-signal_size^2)/4)*ones(4,1); signal_size]);
 
+% cp_opts = struct(...
+%     'num_seg', 1,...
+%     'pos_seg', 0);
+
+
+% cp_opts = struct(...
+%     'num_seg', 4,...
+%     'pos_seg', [0, 0.25, 0.50, 0.75]);
+
+
 design = struct(...
     'type', 'AR',...
     'para', 0);
 
-
-num_iter = 2;
+num_iter = 100;
 
 record    = cell(5, num_iter); % post_Theta_hat, post_tau_hat, post_rank, MCP_outInfo, Theta_star
-save_flag = 0;
+save_flag = 1;
 
 rng(2022);
 
@@ -59,10 +70,10 @@ for iter = 1:num_iter
         'name', 'L2',...
         'eta', 0.8,...
         'Lf', 1e4);
-    Clambda_base  = [0.07, 0.07];
-    window_length = 0.10;
+    Clambda_base  = [0.15, 0.15];
+    window_length = 0.15;
     num_windows   = 20;
-    cutoff        = 3.3;
+    cutoff        = 0.65;
     
     APG_opts_1 = struct(...
         "type", type,...
@@ -84,7 +95,7 @@ for iter = 1:num_iter
     
     post_APG_args = struct(...
         "type", type,...
-        "Clambda", 0.25,...
+        "Clambda", 0.8,...
         "tol", 1e-4,...
         "maxiter", 2e2);
     
@@ -106,6 +117,6 @@ for iter = 1:num_iter
 end
 
 if save_flag
-    save('C:\Users\leish\Documents\Github\LowRank_ChangePoints\MatLassoMCP_main\Simulations\MR_MCP_large_signal\MR_MCP_large_signal.mat', 'record');
+    save('MR_MCP_small_signal.mat', 'record');
 end
 

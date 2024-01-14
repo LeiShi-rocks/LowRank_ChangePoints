@@ -195,7 +195,7 @@ design = struct(...
 
 running_flag = [1,1,1,1];
 
-num_iter = 1;
+num_iter = 25;
 record_dim = zeros(4, 3, num_iter);
 % 4 methods: ours, LASSO, Oracle, NC
 % Fnormsq_1, Fnormsq_2, tau_hat, obj_path, Delta_path
